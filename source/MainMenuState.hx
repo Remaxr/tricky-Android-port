@@ -70,7 +70,9 @@ class MainMenuState extends MusicBeatState
 		
 		trace(trans.animation.frames);
 
-		trans.setGraphicSize(Std.int(trans.width * 1.38));
+		trans.setGraphicSize(Std.int(trans.width * 1.38 * 2));
+
+		trans.screenCenter();
 
 		var bg:FlxSprite = new FlxSprite(-10,-10).loadGraphic(Paths.image('menu/RedBG','clown'));
 		add(bg);
@@ -375,6 +377,10 @@ class MainMenuState extends MusicBeatState
 
 		listOfButtons[selectedIndex].highlight();
 
+		#if mobileC
+		addVirtualPad(LEFT_RIGHT, A_B);
+		#end
+
 		super.create();
 	}
 
@@ -454,14 +460,14 @@ class MainMenuState extends MusicBeatState
 
 		new FlxTimer().start(0.01, function(tmr:FlxTimer)
 			{
-					if (trans.animation.frameIndex == 10 && !once)
+					if (trans.animation.frameIndex == 5 && !once)
 					{
 						once = true;
 						FlxG.sound.music.volume = 1;
 						var snd = new FlxSound().loadEmbedded(Paths.sound('clink','clown'));
 						snd.play();
 					}
-					if (trans.animation.frameIndex == 18)
+					if (trans.animation.frameIndex == 10)
 					{
 						trans.animation.pause();
 						LoadingState.loadAndSwitchState(new PlayState(), true);
@@ -590,7 +596,7 @@ class MainMenuState extends MusicBeatState
 		}
 		if (!selectingDiff)
 		{
-			if (FlxG.keys.justPressed.RIGHT)
+			if (controls.RIGHT_R)
 			{
 				if (show == 'sus' && !killed && hand.alpha == 1)
 					FlxTween.tween(hand, {alpha: 0, x: shower.x + 60, y: shower.y + 60}, 0.6, {ease: FlxEase.expoInOut});
@@ -613,7 +619,7 @@ class MainMenuState extends MusicBeatState
 					trace('selected ' + selectedIndex);
 				}
 			}
-			if (FlxG.keys.justPressed.LEFT)
+			if (controls.LEFT_R)
 			{
 				if (show == 'sus' && !killed && hand.alpha == 1)
 					FlxTween.tween(hand, {alpha: 0, x: shower.x + 60, y: shower.y + 60}, 0.6, {ease: FlxEase.expoInOut});
@@ -638,7 +644,7 @@ class MainMenuState extends MusicBeatState
 			}
 			
 
-			if (FlxG.keys.justPressed.ENTER && !selectedSmth)
+			if (controls.ACCEPT && !selectedSmth)
 			{
 				if (show == 'sus' && !killed)
 				{
@@ -653,7 +659,7 @@ class MainMenuState extends MusicBeatState
 		}
 		else
 		{
-			if (FlxG.keys.justPressed.ESCAPE)
+			if (controls.BACK)
 			{
 				selectingDiff = false;
 				listOfButtons[0].highlight();
@@ -662,7 +668,7 @@ class MainMenuState extends MusicBeatState
 				selectedSmth = false;
 			}
 
-			if (FlxG.keys.justPressed.RIGHT)
+			if (controls.RIGHT_R)
 				{
 					if (diffSelectedIndex + 1 < listOfDiffButtons.length)
 					{
@@ -674,7 +680,7 @@ class MainMenuState extends MusicBeatState
 					else
 						trace('CANT select ' + diffSelectedIndex);
 				}
-				if (FlxG.keys.justPressed.LEFT)
+				if (controls.LEFT_R)
 				{
 					if (diffSelectedIndex > 0)
 					{
@@ -688,7 +694,7 @@ class MainMenuState extends MusicBeatState
 				}
 				
 	
-				if (FlxG.keys.justPressed.ENTER)
+				if (controls.ACCEPT)
 				{
 					selectedSmth = false;
 					listOfDiffButtons[diffSelectedIndex].select();

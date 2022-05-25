@@ -69,7 +69,7 @@ class FreeplayState extends MusicBeatState
 		bars.setGraphicSize(Std.int(bars.width * 0.65));
 		add(bars);
 
-		if (FlxG.save.data.beatenHard || debug)
+		if (FlxG.save.data.beatenHard || debug) // FlxG.save.data.beatenHard || debug
 			songs.push(songFour);
 		else
 		{
@@ -106,6 +106,9 @@ class FreeplayState extends MusicBeatState
 
 		songs[0].highlight();
 
+		#if mobileC
+		addVirtualPad(FULL, A_B);
+		#end
 	}
 
 	function diffGet()
@@ -179,19 +182,19 @@ class FreeplayState extends MusicBeatState
 				score = Highscore.getScore(songs[selectedIndex].pognt,2);
 			diffAndScore.text = diffGet() + " - " + score; 
 
-			if (FlxG.keys.justPressed.ESCAPE && !selectedSmth)
+			if (controls.BACK && !selectedSmth)
 			{
 				selectedSmth = true;
 				MainMenuState.curDifficulty = diff;
 				FlxG.switchState(new MainMenuState());
 			}
 
-			if (FlxG.keys.justPressed.RIGHT)
+			if (controls.RIGHT_R)
 			{
 				FlxG.sound.play(Paths.sound('Hover','clown'));
 				diff += 1;
 			}
-			if (FlxG.keys.justPressed.LEFT)
+			if (controls.LEFT_R)
 			{
 				FlxG.sound.play(Paths.sound('Hover','clown'));
 				diff -= 1;
@@ -202,7 +205,7 @@ class FreeplayState extends MusicBeatState
 			if (diff < 0)
 				diff = 2;
 
-			if (FlxG.keys.justPressed.DOWN)
+			if (controls.DOWN_R)
 				{
 					if (selectedIndex + 1 < songs.length)
 					{
@@ -223,7 +226,7 @@ class FreeplayState extends MusicBeatState
 						trace('selected ' + selectedIndex);
 					}
 				}
-				if (FlxG.keys.justPressed.UP)
+				if (controls.UP_R)
 				{
 					if (selectedIndex > 0)
 					{
@@ -246,7 +249,7 @@ class FreeplayState extends MusicBeatState
 				}
 			
 	
-			if (FlxG.keys.justPressed.ENTER && !selectedSmth)
+			if (controls.ACCEPT && !selectedSmth)
 			{
 				selectedSmth = true;
 				songs[selectedIndex].select();

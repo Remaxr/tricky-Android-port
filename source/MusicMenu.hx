@@ -10,10 +10,10 @@ class MusicMenu extends MusicBeatState
     var tapeJads:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menu/music/Cassette Jads','clown'));
     var tapeYing:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menu/music/Cassette YingYang','clown'));
 
-    // THIS CODE IS BAD I'M SORRY
+    // THIS CODE IS AUTISTIC I'M SORRY
     // - kade
 
-    // liteartly don't ever do this, i'm doing it because i'm stupid.
+    // liteartly don't ever do this, i'm doing it because i'm retarded.
     // - kade
 
     var theMen:Array<TrickyTextButton> = [];
@@ -252,6 +252,10 @@ class MusicMenu extends MusicBeatState
             currentSelected = yingSongs[yingSelected];
             updateSong(yingSongs[yingSelected].pognt);
         }
+
+        #if mobileC
+		addVirtualPad(FULL, A_B);
+		#end
     }
 
     function updateSong(song:String)
@@ -397,7 +401,7 @@ class MusicMenu extends MusicBeatState
 
         if (!selecting)
         {
-            if (FlxG.keys.justPressed.RIGHT)
+            if (controls.RIGHT_R)
 			{
 				if (selectedIndex + 1 < theMen.length)
 				{
@@ -414,7 +418,7 @@ class MusicMenu extends MusicBeatState
 					trace('selected ' + selectedIndex);
 				}
 			}
-			if (FlxG.keys.justPressed.LEFT)
+			if (controls.LEFT_R)
 			{
 				if (selectedIndex > 0)
 				{
@@ -432,19 +436,19 @@ class MusicMenu extends MusicBeatState
 				}
 			}
 
-            if (FlxG.keys.justPressed.ENTER)
+            if (controls.ACCEPT)
             {
                 theMen[selectedIndex].select();
             }
 
-            if (FlxG.keys.justPressed.ESCAPE)
+            if (controls.BACK)
                 FlxG.switchState(new MainMenuState());
         }
         else
         {
             if (rozeSelected != -1)
             {
-                if (FlxG.keys.justPressed.RIGHT)
+                if (controls.RIGHT_R)
                     {
                         if (rozeSelected + 1 < rozeSongs.length)
                         {
@@ -463,7 +467,7 @@ class MusicMenu extends MusicBeatState
                             trace('selected ' + rozeSelected);
                         }
                     }
-                    if (FlxG.keys.justPressed.LEFT)
+                    if (controls.LEFT_R)
                     {
                         if (rozeSelected > 0)
                         {
@@ -483,7 +487,7 @@ class MusicMenu extends MusicBeatState
                         }
                     }
                 
-                if (FlxG.keys.justPressed.ENTER)
+                if (controls.ACCEPT)
                 {
                     rozeSongs[rozeSelected].select();
                 }
@@ -498,7 +502,7 @@ class MusicMenu extends MusicBeatState
 
             if (yingSelected != -1)
             {
-                if (FlxG.keys.justPressed.DOWN)
+                if (controls.DOWN_R)
                     {
                         if (yingSelected + 1 < yingSongs.length)
                         {
@@ -517,7 +521,7 @@ class MusicMenu extends MusicBeatState
                             trace('selected ' + yingSelected);
                         }
                     }
-                    if (FlxG.keys.justPressed.UP)
+                    if (controls.UP_R)
                     {
                         if (yingSelected > 0)
                         {
@@ -537,13 +541,13 @@ class MusicMenu extends MusicBeatState
                         }
                     }
                 
-                if (FlxG.keys.justPressed.ENTER)
+                if (controls.ACCEPT)
                 {
                     yingSongs[yingSelected].select();
                 }
             }
 
-            if (FlxG.keys.justPressed.ESCAPE)
+            if (controls.BACK)
                 selecting = false;
         }
     }

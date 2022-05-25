@@ -1,320 +1,194 @@
-package;
+package options;
 
-import openfl.Lib;
-import Options;
-import Controls.Control;
 import flash.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.addons.display.FlxGridOverlay;
 import flixel.group.FlxGroup.FlxTypedGroup;
-import flixel.input.keyboard.FlxKey;
-import flixel.math.FlxMath;
 import flixel.text.FlxText;
-import flixel.util.FlxColor;
-import lime.utils.Assets;
+import Config;
+
+import flixel.util.FlxSave;
 
 class OptionsMenu extends MusicBeatState
 {
 	var selector:FlxText;
 	var curSelected:Int = 0;
 
-	var options:Array<OptionCatagory> = [
-		new OptionCatagory("Gameplay", [
-			new DFJKOption(controls),
-			new GhostTapOption("Ghost Tapping is when you tap a direction and it doesn't give you a miss."),
-			#if desktop
-			new FPSCapOption("Cap your FPS (Left for -10, Right for +10. SHIFT to go faster)"),
-			#end
-			new ScrollSpeedOption("Change your scroll speed (Left for -0.1, right for +0.1. If it's at 1, it will be chart dependent)"),
-			new AccuracyDOption("Change how accuracy is calculated. (Accurate = Simple, Complex = Milisecond Based)"),
-		]),
-		new OptionCatagory("Appearance", [
-			#if desktop
-			new AccuracyOption("Display accuracy information."),
-			new NPSDisplayOption("Shows your current Notes Per Second."),
-			new SongPositionOption("Show the songs current position (as a bar)"),
-			new DownscrollOption("Change the layout of the strumline.")
-			#else
-			new DistractionsAndEffectsOption("Toggle stage distractions that can hinder your gameplay.")
-			#end
-		]),
-		
-		new OptionCatagory("Misc", [
-			new FPSOption("Toggle the FPS Counter")
-		])
-		
-	];
+	var insubstate:Bool = false;
 
-	private var currentDescription:String = "";
-	private var grpControls:FlxTypedGroup<OptionText>;
-	public static var versionShit:FlxText;
+	//var controlsStrings:Array<String> = [];
 
-	public var currentOptions:Array<FlxText> = [];
+	private var grpControls:FlxTypedGroup<Alphabet>;
 
-	var targetY:Array<Float> = [];
+	var menuItems:Array<String> = ['controls', 'set fps', 'downscroll: off', 'About', 'test cutscene'];
 
-	var currentSelectedCat:OptionCatagory;
+	var UP_P:Bool;
+	var DOWN_P:Bool;
+	var BACK:Bool;
+	var ACCEPT:Bool;
 
-	var menuShade:FlxSprite;
+	var _saveconrtol:FlxSave;
 
-	var offsetPog:FlxText;
+	var config:Config = new Config();
 
 	override function create()
 	{
-		var bg:FlxSprite = new FlxSprite(-10,-10).loadGraphic(Paths.image('menu/freeplay/RedBG','clown'));
-		add(bg);
-		var hedge:FlxSprite = new FlxSprite(-810,-335).loadGraphic(Paths.image('menu/freeplay/hedge','clown'));
-		hedge.setGraphicSize(Std.int(hedge.width * 0.65));
-		add(hedge);
-		var shade:FlxSprite = new FlxSprite(-205,-100).loadGraphic(Paths.image('menu/freeplay/Shadescreen','clown'));
-		shade.setGraphicSize(Std.int(shade.width * 0.65));
-		add(shade);
-		var bars:FlxSprite = new FlxSprite(-225,-395).loadGraphic(Paths.image('menu/freeplay/theBox','clown'));
-		bars.setGraphicSize(Std.int(bars.width * 0.65));
-		add(bars);
+		var menuBG:FlxSprite = new FlxSprite().loadGraphic('assets/images/menuDesat.png');
+		//controlsStrings = CoolUtil.coolTextFile('assets/data/controls.txt');
+		menuBG.color = 0xFFea71fd;
+		menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+		menuBG.updateHitbox();
+		menuBG.screenCenter();
+		menuBG.antialiasing = true;
+		add(menuBG);
 
+		grpControls = new FlxTypedGroup<Alphabet>();
+		add(grpControls);
 
-		
-		for (i in 0...options.length)
-		{
-			var option:OptionCatagory = options[i];
+		if (config.getdownscroll()){
+			menuItems[menuItems.indexOf('downscroll: off')] = 'downscroll: on';
+		}
 
-			var text:FlxText = new FlxText(125,(95 * i) + 100, 0, option.getName(),34);
-			text.color = FlxColor.fromRGB(255,0,0);
-			text.setFormat("tahoma-bold.ttf", 60, FlxColor.RED);
-			add(text);
-			currentOptions.push(text);
-
-			targetY[i] = i;
-
-			trace('option king ' );
+		for (i in 0...menuItems.length)
+		{ 
+			var controlLabel:Alphabet = new Alphabet(0, (70 * i) + 30, menuItems[i], true, false);
+			controlLabel.isMenuItem = true;
+			controlLabel.targetY = i;
+			grpControls.add(controlLabel);
 			// DONT PUT X IN THE FIRST PARAMETER OF new ALPHABET() !!
 		}
 
-		currentDescription = "none";
-
-		currentOptions[0].color = FlxColor.WHITE;
-
-		offsetPog = new FlxText(125,600,0,"Offset: " + FlxG.save.data.offset);
-		offsetPog.setFormat("tahoma-bold.ttf",42,FlxColor.RED);
-		add(offsetPog);
-
-		menuShade = new FlxSprite(-1350,-1190).loadGraphic(Paths.image("menu/freeplay/Menu Shade","clown"));
-		menuShade.setGraphicSize(Std.int(menuShade.width * 0.7));
-		add(menuShade);
-
+		#if mobileC
+		addVirtualPad(UP_DOWN, A_B);
+		#end
+		
 		super.create();
 	}
-
-	var isCat:Bool = false;
-	
-
-	function resyncVocals():Void
-		{
-			MusicMenu.Vocals.pause();
-	
-			FlxG.sound.music.play();
-			MusicMenu.Vocals.time = FlxG.sound.music.time;
-			MusicMenu.Vocals.play();
-		}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
-
-		if (MusicMenu.Vocals != null)
+		
+		if (controls.ACCEPT)
 		{
-			if (MusicMenu.Vocals.playing)
+			var daSelected:String = menuItems[curSelected];
+
+			switch (daSelected)
 			{
-				if (FlxG.sound.music.time > MusicMenu.Vocals.time + 20 || FlxG.sound.music.time < MusicMenu.Vocals.time - 20)
-                    resyncVocals();
+				case "controls":
+					FlxG.switchState(new options.CustomControlsState());
+				
+				case "config":
+					trace("hello");
+				
+				case "set fps":
+					insubstate = true;
+					openSubState(new options.SetFpsSubState());
+				
+				case "downscroll: on" | "downscroll: off":
+					config.setdownscroll();
+					FlxG.resetState();
+				
+				case "About":
+					FlxG.switchState(new options.AboutState());
+				case "test cutscene":
+					//webview.openHTML(Assets.getBytes('assets/index.html'));
+					//webview.openURLfromAssets('index.html');
+					//FlxG.stage.width = 1600; 
+					//FlxG.stage.frameRate = 30;
+					//FlxG.stage;
+					//trace(FlxG.stage.width);
+					
 			}
 		}
 
-
-			if (controls.BACK && !isCat)
+		if (isSettingControl)
+			waitingInput();
+		else
+		{
+			if (controls.BACK #if android || FlxG.android.justReleased.BACK #end)
 				FlxG.switchState(new MainMenuState());
-			else if (controls.BACK)
-			{
-				isCat = false;
-				for (i in currentOptions)
-					remove(i);
-				currentOptions = [];
-				for (i in 0...options.length)
-					{
-						// redo shit
-						var option:OptionCatagory = options[i];
-					
-						var text:FlxText = new FlxText(125,(95 * i) + 100, 0, option.getName(),34);
-						text.color = FlxColor.fromRGB(255,0,0);
-						text.setFormat("tahoma-bold.ttf", 60, FlxColor.RED);
-						add(text);
-						currentOptions.push(text);
-					}
-				remove(menuShade);
-				add(menuShade);
-				curSelected = 0;
-				currentOptions[curSelected].color = FlxColor.WHITE;
-			}
-			if (FlxG.keys.justPressed.UP)
+			if (controls.UP_P)
 				changeSelection(-1);
-			if (FlxG.keys.justPressed.DOWN)
+			if (controls.DOWN_P)
 				changeSelection(1);
-			
-			if (isCat)
-			{
-				if (currentSelectedCat.getOptions()[curSelected].getAccept())
-				{
-					if (FlxG.keys.pressed.SHIFT)
-						{
-							if (FlxG.keys.pressed.RIGHT)
-							{
-								currentSelectedCat.getOptions()[curSelected].right();
-								currentOptions[curSelected].text = currentSelectedCat.getOptions()[curSelected].getDisplay();
-							}
-							if (FlxG.keys.pressed.LEFT)
-							{
-								currentSelectedCat.getOptions()[curSelected].left();
-								currentOptions[curSelected].text = currentSelectedCat.getOptions()[curSelected].getDisplay();
-							}
-						}
-					else
-					{
-						if (FlxG.keys.justPressed.RIGHT)
-						{
-							currentSelectedCat.getOptions()[curSelected].right();
-							currentOptions[curSelected].text = currentSelectedCat.getOptions()[curSelected].getDisplay();
-						}
-						if (FlxG.keys.justPressed.LEFT)
-						{
-							currentSelectedCat.getOptions()[curSelected].left();
-							currentOptions[curSelected].text = currentSelectedCat.getOptions()[curSelected].getDisplay();
-						}
-					}
-				}
-				else
-				{
-					if (FlxG.keys.pressed.SHIFT)
-					{
-						if (FlxG.keys.pressed.RIGHT)
-							FlxG.save.data.offset++;
-						if (FlxG.keys.pressed.LEFT)
-							FlxG.save.data.offset--;
-					}
-					else
-					{
-						if (FlxG.keys.justPressed.RIGHT)
-							FlxG.save.data.offset++;
-						if (FlxG.keys.justPressed.LEFT)
-							FlxG.save.data.offset--;
-					}
-				}
-			}	
-			else
-			{
-					if (FlxG.keys.pressed.SHIFT)
-					{
-						if (FlxG.keys.pressed.RIGHT)
-							FlxG.save.data.offset++;
-						if (FlxG.keys.pressed.LEFT)
-							FlxG.save.data.offset--;
-					}
-					else
-					{
-						if (FlxG.keys.justPressed.RIGHT)
-							FlxG.save.data.offset++;
-						if (FlxG.keys.justPressed.LEFT)
-							FlxG.save.data.offset--;
-					}
-			}
-
-			offsetPog.text = "Offset: " + FlxG.save.data.offset + " (Left/Right)";
-
-			if (controls.RESET)
-					FlxG.save.data.offset = 0;
-
-			if (controls.ACCEPT)
-			{
-				FlxG.sound.play(Paths.sound("confirm",'clown'));
-				if (isCat)
-				{
-					if (currentSelectedCat.getOptions()[curSelected].press()) {
-						// select thingy and redo itself
-						for (i in currentOptions)
-							remove(i);
-						currentOptions = [];
-						for (i in 0...currentSelectedCat.getOptions().length)
-							{
-								// clear and redo everything else
-								var option:Option = currentSelectedCat.getOptions()[i];
-
-								trace(option.getDisplay());
-
-								var text:FlxText = new FlxText(125,(95 * i) + 100, 0, option.getDisplay(),34);
-								text.color = FlxColor.fromRGB(255,0,0);
-								text.setFormat("tahoma-bold.ttf", 60, FlxColor.RED);
-								add(text);
-								currentOptions.push(text);
-							}
-							remove(menuShade);
-							add(menuShade);
-							trace('done');
-						currentOptions[curSelected].color = FlxColor.WHITE;
-					}
-				}
-				else
-				{
-					currentSelectedCat = options[curSelected];
-					isCat = true;
-					for (i in currentOptions)
-						remove(i);
-					currentOptions = [];
-					for (i in 0...currentSelectedCat.getOptions().length)
-						{
-							// clear and redo everything else
-							var option:Option = currentSelectedCat.getOptions()[i];
-
-							trace(option.getDisplay());
-
-							var text:FlxText = new FlxText(125,(95 * i) + 100, 0, option.getDisplay(),34);
-							text.color = FlxColor.fromRGB(255,0,0);
-							text.setFormat("tahoma-bold.ttf", 60, FlxColor.RED);
-							add(text);
-							currentOptions.push(text);
-						}
-						remove(menuShade);
-						add(menuShade);
-					curSelected = 0;
-					currentOptions[curSelected].color = FlxColor.WHITE;
-				}
-			}
-		FlxG.save.flush();
+		}
 	}
 
+	function waitingInput():Void
+	{
+		if (false)// fix this FlxG.keys.getIsDown().length > 0
+		{
+			//PlayerSettings.player1.controls.replaceBinding(Control.LEFT, Keys, FlxG.keys.getIsDown()[0].ID, null);
+		}
+		// PlayerSettings.player1.controls.replaceBinding(Control)
+	}
 
 	var isSettingControl:Bool = false;
 
+	function changeBinding():Void
+	{
+		if (!isSettingControl)
+		{
+			isSettingControl = true;
+		}
+	}
+
 	function changeSelection(change:Int = 0)
 	{
-		#if !switch
-		// NGio.logEvent("Fresh");
+		/* #if !switch
+		NGio.logEvent('Fresh');
 		#end
-		
-		FlxG.sound.play(Paths.sound("Hover",'clown'));
-
-		currentOptions[curSelected].color = FlxColor.fromRGB(255,0,0);
+		*/
+		FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
 
 		curSelected += change;
 
 		if (curSelected < 0)
-			curSelected = currentOptions.length - 1;
-		if (curSelected >= currentOptions.length)
+			curSelected = grpControls.length - 1;
+		if (curSelected >= grpControls.length)
 			curSelected = 0;
 
-
-		currentOptions[curSelected].color = FlxColor.WHITE;
+		// selector.y = (70 * curSelected) + 30;
 
 		var bullShit:Int = 0;
+
+		for (item in grpControls.members)
+		{
+			item.targetY = bullShit - curSelected;
+			bullShit++;
+
+			item.alpha = 0.6;
+			// item.setGraphicSize(Std.int(item.width * 0.8));
+
+			if (item.targetY == 0)
+			{
+				item.alpha = 1;
+				// item.setGraphicSize(Std.int(item.width));
+			}
+		}
 	}
+
+	// (this function is not working)
+	function changeLabel(i:Int, text:String) {
+		var controlLabel:Alphabet = new Alphabet(0, (70 * i) + 30, text, true, false);
+		controlLabel.isMenuItem = true;
+		controlLabel.targetY = i;
+		
+		grpControls.forEach((basic)->{
+			trace(basic.text);
+			if (basic.text == menuItems[i])
+			{
+				grpControls.remove(basic);
+			}
+		});
+		grpControls.insert(i, controlLabel);	
+		menuItems[i] = text;
+	}
+
+	override function closeSubState()
+		{
+			insubstate = false;
+			super.closeSubState();
+		}	
 }

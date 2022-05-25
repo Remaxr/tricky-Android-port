@@ -47,6 +47,8 @@ class GitarooPause extends MusicBeatState
 
 		changeThing();
 
+		FlxG.switchState(new PlayState());
+
 		super.create();
 	}
 

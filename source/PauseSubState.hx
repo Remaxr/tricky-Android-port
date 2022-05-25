@@ -26,9 +26,10 @@ class PauseSubState extends MusicBeatSubstate
 	{
 		super();
 
-		#if debug
-		menuItems.push("Skip Song");
-		#end
+		//#if debug
+		if (PlayState.SONG.song.toLowerCase() == 'improbable-outset' #if debug || true  #end)
+			menuItems.push("Skip Song");
+		//#end
 
 		pauseMusic = new FlxSound().loadEmbedded(Paths.music('breakfast'), true, true);
 		pauseMusic.volume = 0;
@@ -81,6 +82,11 @@ class PauseSubState extends MusicBeatSubstate
 		FlxTween.globalManager.active = false;
 
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+
+		#if mobileC
+		addVirtualPad(UP_DOWN, A);
+		_virtualpad.cameras = cameras;
+		#end
 	}
 
 	override function update(elapsed:Float)
